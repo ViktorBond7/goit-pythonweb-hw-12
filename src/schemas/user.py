@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
+from src.models.user import Role
 
 
 class UserCreate(BaseModel):
@@ -15,6 +16,7 @@ class UserRead(BaseModel):
     email: EmailStr
     confirmed: bool
     avatar: str | None = None
+    role: Role
 
 
 class TokenModel(BaseModel):

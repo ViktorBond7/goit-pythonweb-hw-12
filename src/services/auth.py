@@ -11,6 +11,7 @@ from jose import JWTError, jwt
 from src.models.user import User
 from src.db.session import open_session
 from src.config import app_config as config
+from src.models.user import Role
 
 password_hash = PasswordHash.recommended()
 
@@ -133,3 +134,9 @@ def verify_refresh_token(token: str) -> Optional[str] | None:
         return email
     except JWTError:
         return None
+
+
+def get_current_admin_user(current_user: User = Depends(get_current_user)):
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    return current_user

@@ -43,12 +43,15 @@ async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
 
 
 async def authenticate_user(
-    session: AsyncSession, form_data: dict
-) -> TokenModel | None:
+    session: AsyncSession, form_data: OAuth2PasswordRequestForm
+) -> TokenModel:
+    
     db_user = await session.execute(
         select(User).filter(User.email == form_data.username)
     )
+
     db_user = db_user.scalar_one_or_none()
+    
 
     if not db_user or not Hash().verify_password(
         form_data.password, db_user.hashed_password
@@ -67,13 +70,11 @@ async def authenticate_user(
 
     refresh_token = create_refresh_token(data={"sub": db_user.email})
 
-    res = {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
-
-    return res
+    return TokenModel(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+    )
 
 
 async def refresh_token_service(refresh_token: str) -> TokenModel | None:

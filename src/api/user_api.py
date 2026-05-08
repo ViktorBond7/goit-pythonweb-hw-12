@@ -18,7 +18,7 @@ from src.models.user import User
 from src.schemas.user import TokenModel, UserRead, UserCreate, RequestEmail
 from src.db.session import open_session
 from src.services import user_service
-from src.services.auth import get_current_user, get_email_from_token
+from src.services.auth import get_current_user, get_email_from_token, get_current_admin_user
 from src.services.email import send_email
 from src.services.upload_file import UploadFileService
 from src.config.app_config import settings
@@ -46,6 +46,7 @@ async def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(open_session),
 ):
+  
     return await user_service.authenticate_user(db, form_data)
 
 
@@ -101,7 +102,7 @@ async def refresh_access_token(
 @router.patch("/avatar", response_model=UserRead)
 async def update_avatar_user(
     file: UploadFile = File(),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(open_session),
 ):
     avatar_url = UploadFileService(
