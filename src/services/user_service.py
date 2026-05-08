@@ -110,3 +110,13 @@ async def update_avatar_url(email: str, url: str, session: AsyncSession):
     redis = await get_redis()
     await redis.delete(f"user:{email}")
     return user
+
+
+async def reset_password(email: str, new_password: str, session: AsyncSession) -> None:
+    repository = users.UserRepository(session)
+    user = await repository.update_password(email, Hash().get_password_hash(new_password))
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    redis = await get_redis()
+    await redis.delete(f"user:{email}")

@@ -96,11 +96,14 @@ async def get_current_user(
        
         user_data = json.loads(cached)
         user = User(**user_data)
+        print("Cache hit for user11111111111111:", email)
         return user
-
+    
     # Cache miss — fetch from DB and store in cache
     result = await db.execute(select(User).filter(User.email == email))
     user = result.scalar_one_or_none()
+
+    print("Fetched user from DB:555555555555", )
  
     if user is None:
         raise credentials_exception
@@ -129,6 +132,22 @@ def create_email_token(data: dict):
     return token
 
 
+def create_reset_password_token(data: dict) -> str:
+    issue_date_time = datetime.now(timezone.utc)
+    expire_date_time = issue_date_time + timedelta(
+        minutes=config.RESET_PASSWORD_TOKEN_EXPIRE_MINUTES
+    )
+    payload = {
+        **data,
+        "iat": issue_date_time,
+        "exp": expire_date_time,
+        "type": "reset_password",
+    }
+    return jwt.encode(
+        payload, config.settings.SECRET_KEY, algorithm=config.settings.ALGORITHM
+    )
+
+
 async def get_email_from_token(token: str):
     try:
         payload = jwt.decode(
@@ -140,6 +159,26 @@ async def get_email_from_token(token: str):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Invalid token for email verification",
+        )
+
+
+async def get_email_from_reset_token(token: str) -> str:
+    try:
+        payload = jwt.decode(
+            token, config.settings.SECRET_KEY, algorithms=[config.settings.ALGORITHM]
+        )
+        email = payload.get("sub")
+        token_type = payload.get("type")
+        if not email or token_type != "reset_password":
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid reset token",
+            )
+        return email
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid or expired reset token",
         )
 
 

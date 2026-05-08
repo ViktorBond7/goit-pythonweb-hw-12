@@ -15,11 +15,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.limiter import limiter
 from src.models.user import User
-from src.schemas.user import TokenModel, UserRead, UserCreate, RequestEmail
+from src.schemas.user import (
+    TokenModel,
+    UserRead,
+    UserCreate,
+    RequestEmail,
+    RequestPasswordReset,
+    ResetPassword,
+)
 from src.db.session import open_session
 from src.services import user_service
-from src.services.auth import get_current_user, get_email_from_token, get_current_admin_user
-from src.services.email import send_email
+from src.services.auth import (
+    get_current_user,
+    get_email_from_token,
+    get_current_admin_user,
+    get_email_from_reset_token,
+)
+from src.services.email import send_email, send_reset_password_email
 from src.services.upload_file import UploadFileService
 from src.config.app_config import settings
 
@@ -68,9 +80,9 @@ async def confirmed_email(token: str, db: AsyncSession = Depends(open_session)):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error"
         )
     if user.confirmed:
-        return {"message": "Ваша електронна пошта вже підтверджена"}
-    await user_service.confirmed_email(db, email)
-    return {"message": "Електронну пошту підтверджено"}
+        return {"message": "Email is already confirmed."}
+    await user_service.confirmed_email(email, db)
+    return {"message": "Email has been confirmed."}
 
 
 @router.post("/request_email", status_code=status.HTTP_200_OK)
@@ -97,6 +109,36 @@ async def refresh_access_token(
     refresh_token: str = Form(...), db: AsyncSession = Depends(open_session)
 ):
     return await user_service.refresh_token_service(refresh_token)
+
+
+@router.post("/request_password_reset", status_code=status.HTTP_200_OK)
+async def request_password_reset(
+    body: RequestPasswordReset,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: AsyncSession = Depends(open_session),
+):
+    user = await user_service.get_user_by_email(db, body.email)
+    
+    if user and user.confirmed:
+        background_tasks.add_task(
+            send_reset_password_email,
+            user.email,
+            user.username,
+            request.base_url,
+        )
+    
+    return {"message": "If the account exists, password reset instructions were sent."}
+
+
+@router.post("/reset_password", status_code=status.HTTP_200_OK)
+async def reset_password(
+    body: ResetPassword,
+    db: AsyncSession = Depends(open_session),
+):
+    email = await get_email_from_reset_token(body.token)
+    await user_service.reset_password(email, body.new_password, db)
+    return {"message": "Password has been reset successfully."}
 
 
 @router.patch("/avatar", response_model=UserRead)

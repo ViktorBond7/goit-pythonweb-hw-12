@@ -42,3 +42,12 @@ class UserRepository:
         await self.db_session.commit()
         await self.db_session.refresh(user)
         return user
+
+    async def update_password(self, email: str, hashed_password: str) -> User | None:
+        user = await self.get_user_by_email(email)
+        if not user:
+            return None
+        user.hashed_password = hashed_password
+        await self.db_session.commit()
+        await self.db_session.refresh(user)
+        return user

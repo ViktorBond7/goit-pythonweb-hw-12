@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 USER_CACHE_TTL = 900  # 15 minutes in seconds
+RESET_PASSWORD_TOKEN_EXPIRE_MINUTES = 30
 
 origins = [
     "http://127.0.0.1:8000",
