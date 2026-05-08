@@ -13,6 +13,7 @@ from src.services.auth import (
 )
 from src.models.user import User
 from src.schemas.user import TokenModel, UserCreate
+from src.db.redis_cache import get_redis
 
 
 async def create_user(session: AsyncSession, user: UserCreate) -> User:
@@ -104,4 +105,8 @@ async def confirmed_email(email: str, session: AsyncSession) -> None:
 
 async def update_avatar_url(email: str, url: str, session: AsyncSession):
     repository = users.UserRepository(session)
-    return await repository.update_avatar_url(email, url)
+    user = await repository.update_avatar_url(email, url)
+    # Invalidate cached user so next request fetches fresh data
+    redis = await get_redis()
+    await redis.delete(f"user:{email}")
+    return user

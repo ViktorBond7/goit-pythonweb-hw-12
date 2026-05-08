@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta, UTC, timezone
 from typing import Optional
 
@@ -10,6 +11,7 @@ from jose import JWTError, jwt
 
 from src.models.user import User
 from src.db.session import open_session
+from src.db.redis_cache import get_redis
 from src.config import app_config as config
 from src.models.user import Role
 
@@ -66,9 +68,10 @@ def create_refresh_token(data: dict) -> str:
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(open_session)
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(open_session),
+    redis=Depends(get_redis),
 ):
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -76,22 +79,44 @@ async def get_current_user(
     )
 
     try:
-        # Decode JWT
+        
         payload = jwt.decode(
             token, config.settings.SECRET_KEY, algorithms=[config.settings.ALGORITHM]
         )
-
-        email = payload["sub"]
+        email: str = payload.get("sub")
         if email is None or payload.get("type") != "access":
             raise credentials_exception
-    except JWTError as e:
-        raise credentials_exception
-    user_service = await db.execute(select(User).filter(User.email == email))
-    user_service = user_service.scalar_one_or_none()
-    if user_service is None:
+    except JWTError:
         raise credentials_exception
 
-    return user_service
+    # Try to get user from Redis cache
+    cache_key = f"user:{email}"
+    cached = await redis.get(cache_key)
+    if cached:
+       
+        user_data = json.loads(cached)
+        user = User(**user_data)
+        return user
+
+    # Cache miss — fetch from DB and store in cache
+    result = await db.execute(select(User).filter(User.email == email))
+    user = result.scalar_one_or_none()
+ 
+    if user is None:
+        raise credentials_exception
+
+    user_dict = {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "hashed_password": user.hashed_password,
+        "avatar": user.avatar,
+        "confirmed": user.confirmed,
+        "role": user.role.value,
+    }
+    await redis.set(cache_key, json.dumps(user_dict), ex=config.USER_CACHE_TTL)
+
+    return user
 
 
 def create_email_token(data: dict):

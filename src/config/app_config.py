@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
+USER_CACHE_TTL = 900  # 15 minutes in seconds
 
 origins = [
     "http://127.0.0.1:8000",
@@ -31,6 +32,8 @@ class Settings(BaseSettings):
     CLD_NAME: str
     CLD_API_KEY: int 
     CLD_API_SECRET: str
+
+    REDIS_URL: str = "redis://localhost:6379"
 
     model_config = SettingsConfigDict(env_file=".env")
 
