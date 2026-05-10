@@ -12,27 +12,27 @@ origins = [
     ]
 
 class Settings(BaseSettings):
-    DATABASE_CONNECT_URL: str
-    SECRET_KEY: str
-    ALGORITHM: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
+    DATABASE_CONNECT_URL: str = "postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}"
+    SECRET_KEY: str = "your_secret_key"
+    ALGORITHM: str = "HS256"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "password"
+    POSTGRES_DB: str = "contact_book"
 
-    MAIL_USERNAME: EmailStr
-    MAIL_PASSWORD: str
-    MAIL_FROM: EmailStr
-    MAIL_PORT: int
-    MAIL_SERVER: str
+    MAIL_USERNAME: EmailStr = "your_email@example.com"
+    MAIL_PASSWORD: str = "your_email_password"
+    MAIL_FROM: EmailStr = "your_email@example.com"
+    MAIL_PORT: int = 587 
+    MAIL_SERVER: str = "smtp.example.com"
     MAIL_FROM_NAME: str = "Contact Book"
     MAIL_STARTTLS: bool = False
     MAIL_SSL_TLS: bool = True
     USE_CREDENTIALS: bool = True
     VALIDATE_CERTS: bool = True
 
-    CLD_NAME: str
-    CLD_API_KEY: int 
-    CLD_API_SECRET: str
+    CLD_NAME: str = "your_cloudinary_name"
+    CLD_API_KEY: int = 1234567890
+    CLD_API_SECRET: str = "your_cloudinary_api_secret"
 
     REDIS_URL: str = "redis://localhost:6379"
 

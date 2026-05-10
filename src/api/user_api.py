@@ -154,3 +154,5 @@ async def update_avatar_user(
     user = await user_service.update_avatar_url(user.email, avatar_url, db)
 
     return user
+
+
