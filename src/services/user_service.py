@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from libgravatar import Gravatar
 from sqlalchemy import select
+from redis.asyncio import Redis
 
 from src.repositories import users
 from src.services.auth import (
@@ -46,13 +47,12 @@ async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
 async def authenticate_user(
     session: AsyncSession, form_data: OAuth2PasswordRequestForm
 ) -> TokenModel:
-    
+
     db_user = await session.execute(
         select(User).filter(User.email == form_data.username)
     )
 
     db_user = db_user.scalar_one_or_none()
-    
 
     if not db_user or not Hash().verify_password(
         form_data.password, db_user.hashed_password
@@ -103,20 +103,26 @@ async def confirmed_email(email: str, session: AsyncSession) -> None:
     return await users_repo.confirmed_email(email)
 
 
-async def update_avatar_url(email: str, url: str, session: AsyncSession):
+async def update_avatar_url(
+    email: str, url: str, session: AsyncSession, redis: Redis
+) -> User:
     repository = users.UserRepository(session)
     user = await repository.update_avatar_url(email, url)
     # Invalidate cached user so next request fetches fresh data
-    redis = await get_redis()
     await redis.delete(f"user:{email}")
     return user
 
 
-async def reset_password(email: str, new_password: str, session: AsyncSession) -> None:
+async def reset_password(
+    email: str, new_password: str, session: AsyncSession, redis: Redis
+) -> None:
     repository = users.UserRepository(session)
-    user = await repository.update_password(email, Hash().get_password_hash(new_password))
+    user = await repository.update_password(
+        email, Hash().get_password_hash(new_password)
+    )
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User111 not found"
+        )
 
-    redis = await get_redis()
     await redis.delete(f"user:{email}")

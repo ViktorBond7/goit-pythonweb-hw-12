@@ -27,7 +27,9 @@ async def get_all_or_search_contacts(
 
 
 # Create new contact
-@router.post("/contacts/", response_model=ContactResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/contacts/", response_model=ContactResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_contact(
     contact: ContactRequest,
     session: AsyncSession = Depends(open_session),

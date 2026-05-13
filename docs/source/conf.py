@@ -10,13 +10,13 @@ import sys
 import os
 
 # sys.path.append(os.path.abspath("..."))
-sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath("../../"))
 
 
-project = 'Contacts Api'
-copyright = '2026, Bond'
-author = 'Bond'
-release = '2026'
+project = "Contacts Api"
+copyright = "2026, Bond"
+author = "Bond"
+release = "2026"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -30,6 +30,5 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "alembic"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'nature'
-html_static_path = ['_static']
-
+html_theme = "nature"
+html_static_path = ["_static"]

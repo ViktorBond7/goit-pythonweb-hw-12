@@ -11,8 +11,10 @@ from fastapi import (
     File,
 )
 from fastapi.security import OAuth2PasswordRequestForm
+from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db.redis_cache import get_redis
 from src.limiter import limiter
 from src.models.user import User
 from src.schemas.user import (
@@ -58,7 +60,7 @@ async def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(open_session),
 ):
-  
+
     return await user_service.authenticate_user(db, form_data)
 
 
@@ -119,7 +121,7 @@ async def request_password_reset(
     db: AsyncSession = Depends(open_session),
 ):
     user = await user_service.get_user_by_email(db, body.email)
-    
+
     if user and user.confirmed:
         background_tasks.add_task(
             send_reset_password_email,
@@ -127,7 +129,7 @@ async def request_password_reset(
             user.username,
             request.base_url,
         )
-    
+
     return {"message": "If the account exists, password reset instructions were sent."}
 
 
@@ -135,9 +137,11 @@ async def request_password_reset(
 async def reset_password(
     body: ResetPassword,
     db: AsyncSession = Depends(open_session),
+    redis: Redis = Depends(get_redis),
 ):
+
     email = await get_email_from_reset_token(body.token)
-    await user_service.reset_password(email, body.new_password, db)
+    await user_service.reset_password(email, body.new_password, db, redis)
     return {"message": "Password has been reset successfully."}
 
 
@@ -146,13 +150,12 @@ async def update_avatar_user(
     file: UploadFile = File(),
     user: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(open_session),
+    redis: Redis = Depends(get_redis),
 ):
     avatar_url = UploadFileService(
         settings.CLD_NAME, settings.CLD_API_KEY, settings.CLD_API_SECRET
     ).upload_file(file, user.username)
 
-    user = await user_service.update_avatar_url(user.email, avatar_url, db)
+    user = await user_service.update_avatar_url(user.email, avatar_url, db, redis)
 
     return user
-
-

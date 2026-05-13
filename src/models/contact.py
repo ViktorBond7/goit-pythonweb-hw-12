@@ -6,7 +6,6 @@ from src.models.user import User
 from src.db.base import Base
 
 
-
 class Contact(Base):
     __tablename__ = "contacts"
 
@@ -18,9 +17,10 @@ class Contact(Base):
     birthday: Mapped[date] = mapped_column(Date, nullable=False)
     additional_data: Mapped[str | None] = mapped_column(nullable=True)
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
 
-   
     user: Mapped["User"] = relationship("User", back_populates="contacts")
 
     def __repr__(self) -> str:

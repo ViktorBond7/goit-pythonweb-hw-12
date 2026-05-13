@@ -79,7 +79,7 @@ async def get_current_user(
     )
 
     try:
-        
+
         payload = jwt.decode(
             token, config.settings.SECRET_KEY, algorithms=[config.settings.ALGORITHM]
         )
@@ -93,18 +93,16 @@ async def get_current_user(
     cache_key = f"user:{email}"
     cached = await redis.get(cache_key)
     if cached:
-       
+
         user_data = json.loads(cached)
         user = User(**user_data)
-        print("Cache hit for user11111111111111:", email)
+
         return user
-    
+
     # Cache miss — fetch from DB and store in cache
     result = await db.execute(select(User).filter(User.email == email))
     user = result.scalar_one_or_none()
 
-    print("Fetched user from DB:555555555555", )
- 
     if user is None:
         raise credentials_exception
 

@@ -26,7 +26,6 @@ async def get_all_contacts(
         list[Contact]: A list of contacts or an empty list if no contacts match the filters.
     """
     stmt = select(Contact).filter(Contact.user_id == user.id)
-    
 
     if first_name:
         stmt = stmt.filter(Contact.first_name.ilike(f"%{first_name}%"))
@@ -50,7 +49,7 @@ async def create_contact(
         session (AsyncSession): The database session.
         contact (Contact): The contact data to create.
         user (User): The user for whom the contact is being created.
-    
+
     returns:
         Contact: The newly created contact object.
     """
@@ -66,12 +65,12 @@ async def get_contact_by_id(
 ) -> Contact | None:
     """
     Get a contact by its ID for a specific user.
-    
+
     args:
         session (AsyncSession): The database session.
         contact_id (int): The ID of the contact to retrieve.
         user (User): The user whose contact is being retrieved.
-    
+
     returns:
         Contact: The contact object if found, otherwise None.
     """
@@ -85,12 +84,12 @@ async def get_contact_by_email(
 ) -> Contact | None:
     """
     Get a contact by its email for a specific user.
-    
+
     args:
         session (AsyncSession): The database session.
         email (str): The email of the contact to retrieve.
         user (User): The user whose contact is being retrieved.
-    
+
     returns:
         Contact: The contact object if found, otherwise None.
     """
@@ -104,12 +103,12 @@ async def update_contact(
 ) -> Contact:
     """
     Update a contact for a specific user.
-    
+
     args:
         session (AsyncSession): The database session.
         db_contact (Contact): The contact object to update.
         user (User): The user whose contact is being updated.
-    
+
     returns:
         Contact: The updated contact object if the update is successful, otherwise None.
     """
@@ -124,7 +123,7 @@ async def update_contact(
 async def delete_contact(session: AsyncSession, db_contact_id: int, user: User) -> None:
     """
     Delete a contact by its ID for a specific user.
-    
+
     args:
         session (AsyncSession): The database session.
         db_contact_id (int): The ID of the contact to delete.
